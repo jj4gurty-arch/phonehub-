@@ -5,22 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ultimate Phone Hub</title>
 <style>
-  body { margin:0; font-family:Arial,sans-serif; background:#121212; color:white; display:flex; flex-direction:column; align-items:center; min-height:100vh; padding:10px;}
-  h1 { font-size:24px; margin-bottom:15px; text-align:center; }
-  .hub-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:15px; width:100%; max-width:600px; }
-  .hub-button { background:#1f1f1f; border:none; padding:20px; font-size:18px; border-radius:12px; color:white; cursor:pointer; user-select:none; touch-action:manipulation; }
-  .hub-button:hover { background:#333; }
-  video { margin-top:20px; max-width:95%; border-radius:12px; border:3px solid #fff; display:none; }
-  #notesContainer { width:95%; max-width:500px; margin-top:15px; display:none;}
-  #notesArea { width:100%; height:120px; border-radius:10px; border:2px solid #fff; background:#222; color:white; font-size:16px; padding:10px;}
-  #chatBox { width:95%; max-width:500px; height:250px; background:#222; border-radius:12px; border:2px solid #fff; margin-top:15px; padding:10px; overflow-y:auto; font-size:16px; display:none;}
-  .message{margin:5px 0;}
-  .ai{color:#ff4d4d;}
-  .user{color:#4dff4d;}
-  #quickTools{width:95%; max-width:500px; margin-top:15px; display:none; flex-wrap:wrap; gap:10px;}
-  .tool-button{flex:1 1 45%; padding:15px; background:#1f1f1f; border:none; border-radius:10px; font-size:16px; color:white; cursor:pointer;}
-  .tool-button:hover{background:#333;}
-  #gameCanvas{display:none; margin-top:15px; border:3px solid #fff; border-radius:12px;}
+body { margin:0; font-family:Arial,sans-serif; background:#121212; color:white; display:flex; flex-direction:column; align-items:center; min-height:100vh; padding:10px;}
+h1 { font-size:24px; margin-bottom:15px; text-align:center; }
+.hub-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; width:100%; max-width:600px; }
+.hub-button { background:#1f1f1f; border:none; padding:15px; font-size:16px; border-radius:12px; color:white; cursor:pointer; user-select:none; touch-action:manipulation; }
+.hub-button:hover { background:#333; }
+video, #generatedPic, #gameCanvas { margin-top:15px; max-width:95%; border-radius:12px; border:3px solid #fff; display:none; }
+#notesContainer { width:95%; max-width:500px; margin-top:15px; display:none;}
+#notesArea { width:100%; height:120px; border-radius:10px; border:2px solid #fff; background:#222; color:white; font-size:16px; padding:10px;}
+#chatBox { width:95%; max-width:500px; height:250px; background:#222; border-radius:12px; border:2px solid #fff; margin-top:15px; padding:10px; overflow-y:auto; font-size:16px; display:none;}
+.message{margin:5px 0;}
+.ai{color:#ff4d4d;}
+.user{color:#4dff4d;}
+#quickTools{width:95%; max-width:500px; margin-top:15px; display:none; flex-wrap:wrap; gap:10px;}
+.tool-button{flex:1 1 45%; padding:15px; background:#1f1f1f; border:none; border-radius:10px; font-size:16px; color:white; cursor:pointer;}
+.tool-button:hover{background:#333;}
+#genOptions { display:flex; flex-wrap:wrap; gap:10px; margin-top:15px; justify-content:center; display:none;}
+.gen-btn { flex:1 1 45%; padding:10px; background:#1f1f1f; border:none; border-radius:10px; font-size:14px; color:white; cursor:pointer;}
+.gen-btn:hover { background:#333; }
 </style>
 </head>
 <body>
@@ -30,16 +32,20 @@
 <div class="hub-grid">
   <button class="hub-button" id="aiMicBtn">🎤 AI Microphone</button>
   <button class="hub-button" id="cameraBtn">📸 Camera Fun</button>
+  <button class="hub-button" id="takePicBtn">📷 Take Picture</button>
+  <button class="hub-button" id="recordBtn">⏺ Start Recording</button>
+  <button class="hub-button" id="stopRecordBtn">⏹ Stop Recording</button>
+  <button class="hub-button" id="picGenBtn">🖼 Picture Generator</button>
   <button class="hub-button" id="gameBtn">🎮 Mini-Games</button>
   <button class="hub-button" id="notesBtn">📝 Notes</button>
   <button class="hub-button" id="savageAiBtn">🤖 Savage AI</button>
   <button class="hub-button" id="musicBtn">🎵 Music Player</button>
-  <button class="hub-button" id="reminderBtn">📅 Smart Reminder</button>
   <button class="hub-button" id="toolsBtn">⚡ Quick Tools</button>
-  <button class="hub-button" id="themesBtn">🌈 Themes</button>
 </div>
 
 <video id="cameraStream" autoplay playsinline></video>
+<img id="generatedPic" alt="Generated Picture">
+<canvas id="gameCanvas" width="400" height="400"></canvas>
 
 <div id="notesContainer">
   <textarea id="notesArea" placeholder="Write your notes here..."></textarea>
@@ -53,7 +59,14 @@
   <button class="tool-button" id="calcBtn">🧮 Calculator</button>
 </div>
 
-<canvas id="gameCanvas" width="400" height="400"></canvas>
+<div id="genOptions">
+  <button class="gen-btn" data-type="dog">🐶 Dog</button>
+  <button class="gen-btn" data-type="cat">🐱 Cat</button>
+  <button class="gen-btn" data-type="person">👤 Person</button>
+  <button class="gen-btn" data-type="gamefont">🎮 Game Font</button>
+  <button class="gen-btn" data-type="pattern">🎨 Pattern</button>
+  <button class="gen-btn" data-type="emoji">😎 Emoji Art</button>
+</div>
 
 <audio id="musicPlayer" controls style="margin-top:15px;width:95%; max-width:500px;">
   <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
@@ -61,29 +74,113 @@
 </audio>
 
 <script>
-const addMessage = (msg,sender)=>{const c=document.getElementById('chatBox');const d=document.createElement('div');d.className='message '+sender;d.textContent=msg;c.appendChild(d);c.scrollTop=c.scrollHeight;}
+let mediaRecorder, audioChunks=[], cameraStream;
+
+// Helper: Add messages to Savage AI chat
+const addMessage=(msg,sender)=>{
+  const c=document.getElementById('chatBox'); const d=document.createElement('div'); d.className='message '+sender; d.textContent=msg; c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
 
 // --- AI Microphone ---
-document.getElementById('aiMicBtn').addEventListener('click',async()=>{
+document.getElementById('aiMicBtn').addEventListener('click', async ()=>{
   try{
     await navigator.mediaDevices.getUserMedia({audio:true});
-    alert('Microphone active!');
+    alert('Mic active!');
     const r=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
     r.lang='en-US'; r.interimResults=false;
     r.onresult=e=>alert('You said: '+e.results[0][0].transcript);
     r.start();
-  }catch{alert('Mic not available');}
+  }catch{alert('Mic unavailable');}
 });
 
 // --- Camera ---
-document.getElementById('cameraBtn').addEventListener('click',async()=>{
+document.getElementById('cameraBtn').addEventListener('click', async ()=>{
   const v=document.getElementById('cameraStream');
   try{
-    const s=await navigator.mediaDevices.getUserMedia({video:true});
-    v.srcObject=s; v.style.display='block';
-    const overlay=document.createElement('canvas'); overlay.width=400; overlay.height=300; overlay.style.position='absolute'; overlay.style.top=v.offsetTop+'px'; overlay.style.left=v.offsetLeft+'px'; document.body.appendChild(overlay);
-    v.addEventListener('click',()=>{const c=overlay.getContext('2d'); c.drawImage(v,0,0,overlay.width,overlay.height); alert('Photo captured!');});
-  }catch{alert('Camera not available');}
+    cameraStream=await navigator.mediaDevices.getUserMedia({video:true});
+    v.srcObject=cameraStream; v.style.display='block';
+  }catch{alert('Camera unavailable');}
+});
+
+// --- Take Picture ---
+document.getElementById('takePicBtn').addEventListener('click',()=>{
+  if(!cameraStream){alert('Start camera first!'); return;}
+  const v=document.getElementById('cameraStream');
+  const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
+  const ctx=c.getContext('2d'); ctx.drawImage(v,0,0,c.width,c.height);
+  const dataURL=c.toDataURL('image/png');
+  const a=document.createElement('a'); a.href=dataURL; a.download='photo.png'; a.click();
+  alert('Photo taken!');
+});
+
+// --- Record Audio ---
+document.getElementById('recordBtn').addEventListener('click', async ()=>{
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRecorder=new MediaRecorder(stream); audioChunks=[];
+    mediaRecorder.ondataavailable=e=>audioChunks.push(e.data);
+    mediaRecorder.start(); alert('Recording started!');
+  }catch{alert('Mic unavailable');}
+});
+
+// --- Stop Recording ---
+document.getElementById('stopRecordBtn').addEventListener('click',()=>{
+  if(!mediaRecorder) return alert('No recording in progress!');
+  mediaRecorder.onstop=()=>{
+    const blob=new Blob(audioChunks,{type:'audio/mpeg'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='recording.mp3'; a.click();
+    alert('Recording saved!');
+  };
+  mediaRecorder.stop();
+});
+
+// --- Picture Generator ---
+const samples = {
+  dog: ["https://placedog.net/400/400?random=1","https://placedog.net/400/400?random=2","https://placedog.net/400/400?random=3"],
+  cat: ["https://placekitten.com/400/400","https://placekitten.com/401/400","https://placekitten.com/402/400"],
+  person: ["https://i.pravatar.cc/400?img=1","https://i.pravatar.cc/400?img=2","https://i.pravatar.cc/400?img=3"],
+  gamefont: ["https://dummyimage.com/400x400/000/fff&text=GAME","https://dummyimage.com/400x400/111/fff&text=LEVEL","https://dummyimage.com/400x400/222/fff&text=PLAY"]
+};
+const rand = arr => arr[Math.floor(Math.random()*arr.length)];
+
+document.getElementById('picGenBtn').addEventListener('click',()=>{document.getElementById('genOptions').style.display='flex';});
+document.querySelectorAll('.gen-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const type=btn.dataset.type;
+    const img=document.getElementById('generatedPic');
+    
+    if(type==='dog' || type==='cat' || type==='person' || type==='gamefont'){
+      img.src = rand(samples[type]);
+      img.style.display='block';
+      const a=document.createElement('a'); a.href=img.src; a.download=type+'.png'; a.click();
+    }
+    
+    if(type==='pattern'){
+      const canvas=document.createElement('canvas'); canvas.width=400; canvas.height=400;
+      const ctx=canvas.getContext('2d');
+      for(let i=0;i<50;i++){
+        ctx.fillStyle=`hsl(${Math.random()*360},100%,50%)`;
+        ctx.beginPath();
+        ctx.arc(Math.random()*400, Math.random()*400, Math.random()*40,0,Math.PI*2);
+        ctx.fill();
+      }
+      img.src=canvas.toDataURL('image/png'); img.style.display='block';
+      const a=document.createElement('a'); a.href=img.src; a.download='pattern.png'; a.click();
+    }
+    
+    if(type==='emoji'){
+      const canvas=document.createElement('canvas'); canvas.width=400; canvas.height=400;
+      const ctx=canvas.getContext('2d');
+      const emojis=['😎','😂','🔥','🐱','🐶','🎮','🤖','⭐'];
+      for(let i=0;i<100;i++){
+        ctx.font=`${Math.random()*30+10}px Arial`;
+        ctx.fillText(rand(emojis), Math.random()*380, Math.random()*380);
+      }
+      img.src=canvas.toDataURL('image/png'); img.style.display='block';
+      const a=document.createElement('a'); a.href=img.src; a.download='emoji.png'; a.click();
+    }
+  });
 });
 
 // --- Mini-Game ---
@@ -117,29 +214,22 @@ document.getElementById('savageAiBtn').addEventListener('click',async()=>{
     const synth=window.speechSynthesis;
     r.onresult=e=>{
       const u=e.results[0][0].transcript; addMessage('You: '+u,'user');
-      const replies=['Savage AI 😎: Is that all? 🤨','Savage AI 😂: My grandma talks louder!','Savage AI 😏: Wow… impressive… not 🙄','Savage AI 🤖: Bored already 😴','Savage AI 😈: You call that talking? 😹'];
-      const rep=replies[Math.floor(Math.random()*replies.length)]; addMessage(rep,'ai');
-      const utter=new SpeechSynthesisUtterance(rep); synth.speak(utter);
+      const replies=['Savage AI 😎: Is that all? 🤨','Savage AI 😂: My grandma talks louder!','Savage AI 😏: Wow… impressive… not 🙄','Savage AI 🤖: bitch 😴','Savage AI 😈: yo skin cracks every time you move 😹'];
+      const rep=replies[Math.floor(Math.random()*replies.length)];
+      addMessage(rep,'ai'); const utter=new SpeechSynthesisUtterance(rep); synth.speak(utter);
     };
-    r.onend=()=>r.start();
-    r.start();
-  }catch{alert('Mic not available');}
+    r.onend=()=>r.start(); r.start();
+  }catch{alert('Mic unavailable');}
 });
 
 // --- Music Player ---
-document.getElementById('musicBtn').addEventListener('click',()=>{const m=document.getElementById('musicPlayer'); m.style.display=m.style.display==='none'?'block':'block'; m.play();});
+document.getElementById('musicBtn').addEventListener('click',()=>{const m=document.getElementById('musicPlayer'); m.style.display='block'; m.play();});
 
 // --- Quick Tools ---
 document.getElementById('toolsBtn').addEventListener('click',()=>{const t=document.getElementById('quickTools'); t.style.display=t.style.display==='none'?'flex':'none';});
 document.getElementById('flashBtn').addEventListener('click',()=>alert('Flashlight toggled (requires device access)'));
 document.getElementById('timerBtn').addEventListener('click',()=>{const t=prompt('Set timer in seconds'); if(t){setTimeout(()=>alert('Timer done!'),t*1000);}});
 document.getElementById('calcBtn').addEventListener('click',()=>{const e=prompt('Enter expression'); if(e)alert('Result: '+eval(e));});
-
-// --- Themes ---
-document.getElementById('themesBtn').addEventListener('click',()=>{
-  if(document.body.style.background==='white'){document.body.style.background='#121212'; document.body.style.color='white';}else{document.body.style.background='white'; document.body.style.color='black';}
-});
-
 </script>
 </body>
 </html>
