@@ -2,218 +2,144 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Ultimate Smart Phone Hub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Phone Hub</title>
 <style>
-  body { margin:0; font-family:Arial,sans-serif; background:#0a0a0a; color:white; }
-  header { background:#151515; padding:12px; text-align:center; font-size:18px; position:sticky; top:0; z-index:100; }
-  .container { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; padding:10px; }
-  .card { background:#1e1e1e; padding:20px; border-radius:20px; text-align:center; cursor:pointer; font-size:16px; }
-  .card:active { background:#333; }
-  #main { padding:10px; }
-  #output { background:#000; padding:10px; border-radius:10px; height:200px; overflow:auto; margin-top:10px; }
-  button { padding:10px; border:none; border-radius:10px; background:#00ffc3; margin:5px 0; width:100%; font-size:16px; }
-  .face { font-size:50px; text-align:center; }
-  .hands { font-size:40px; text-align:center; margin-top:5px; }
-  textarea, input { width:95%; padding:10px; margin:5px 0; border-radius:10px; border:none; font-size:16px; }
-  iframe { width:100%; height:250px; border:none; border-radius:10px; margin-top:10px; }
+  body { margin:0; font-family:Arial,sans-serif; background:#121212; color:white; display:flex; flex-direction:column; align-items:center; min-height:100vh; padding:10px;}
+  h1 { font-size:24px; margin-bottom:15px; text-align:center; }
+  .hub-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:15px; width:100%; max-width:600px; }
+  .hub-button { background:#1f1f1f; border:none; padding:20px; font-size:18px; border-radius:12px; color:white; cursor:pointer; user-select:none; touch-action:manipulation; }
+  .hub-button:hover { background:#333; }
+  video { margin-top:20px; max-width:95%; border-radius:12px; border:3px solid #fff; display:none; }
+  #notesContainer { width:95%; max-width:500px; margin-top:15px; display:none;}
+  #notesArea { width:100%; height:120px; border-radius:10px; border:2px solid #fff; background:#222; color:white; font-size:16px; padding:10px;}
+  #chatBox { width:95%; max-width:500px; height:250px; background:#222; border-radius:12px; border:2px solid #fff; margin-top:15px; padding:10px; overflow-y:auto; font-size:16px; display:none;}
+  .message{margin:5px 0;}
+  .ai{color:#ff4d4d;}
+  .user{color:#4dff4d;}
+  #quickTools{width:95%; max-width:500px; margin-top:15px; display:none; flex-wrap:wrap; gap:10px;}
+  .tool-button{flex:1 1 45%; padding:15px; background:#1f1f1f; border:none; border-radius:10px; font-size:16px; color:white; cursor:pointer;}
+  .tool-button:hover{background:#333;}
+  #gameCanvas{display:none; margin-top:15px; border:3px solid #fff; border-radius:12px;}
 </style>
 </head>
 <body>
 
-<header>📱 Ultimate Smart Phone Hub</header>
+<h1>Ultimate Phone Hub</h1>
 
-<div class="container" id="menu">
-  <div class="card" data-section="ai">🤖 AI</div>
-  <div class="card" data-section="code">💻 Code</div>
-  <div class="card" data-section="game">🎮 Maker</div>
-  <div class="card" data-section="mini">🕹 Games</div>
-  <div class="card" data-section="savage">😈 Savage AI</div>
-  <div class="card" data-section="fun">🎉 Fun</div>
-  <div class="card" data-section="tricks">🃏 Tricks</div>
+<div class="hub-grid">
+  <button class="hub-button" id="aiMicBtn">🎤 AI Microphone</button>
+  <button class="hub-button" id="cameraBtn">📸 Camera Fun</button>
+  <button class="hub-button" id="gameBtn">🎮 Mini-Games</button>
+  <button class="hub-button" id="notesBtn">📝 Notes</button>
+  <button class="hub-button" id="savageAiBtn">🤖 Savage AI</button>
+  <button class="hub-button" id="musicBtn">🎵 Music Player</button>
+  <button class="hub-button" id="reminderBtn">📅 Smart Reminder</button>
+  <button class="hub-button" id="toolsBtn">⚡ Quick Tools</button>
+  <button class="hub-button" id="themesBtn">🌈 Themes</button>
 </div>
 
-<div id="main"></div>
+<video id="cameraStream" autoplay playsinline></video>
+
+<div id="notesContainer">
+  <textarea id="notesArea" placeholder="Write your notes here..."></textarea>
+</div>
+
+<div id="chatBox"></div>
+
+<div id="quickTools">
+  <button class="tool-button" id="flashBtn">🔦 Flashlight</button>
+  <button class="tool-button" id="timerBtn">⏱ Timer</button>
+  <button class="tool-button" id="calcBtn">🧮 Calculator</button>
+</div>
+
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+
+<audio id="musicPlayer" controls style="margin-top:15px;width:95%; max-width:500px;">
+  <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
 
 <script>
-// ==== Voice helpers ====
-function speak(text){
-  const u = new SpeechSynthesisUtterance(text);
-  speechSynthesis.speak(u);
-}
+const addMessage = (msg,sender)=>{const c=document.getElementById('chatBox');const d=document.createElement('div');d.className='message '+sender;d.textContent=msg;c.appendChild(d);c.scrollTop=c.scrollHeight;}
 
-function startMic(callback){
-  try {
-    const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    rec.lang = 'en-US';
-    rec.start();
-    rec.onresult = (e) => callback(e.results[0][0].transcript);
-  } catch(e){
-    alert('Mic not supported');
-  }
-}
-
-// ==== AI Logic ====
-function smartReply(input){
-  input = input.toLowerCase();
-  if(input.includes('hello')) return "Hey, what's up?";
-  if(input.includes('your name')) return "I'm your phone brain.";
-  if(input.includes('help')) return "Try the game maker or coding tool.";
-  return "I heard: " + input;
-}
-
-function handleAI(text){
-  const out = document.getElementById('output');
-  let reply = smartReply(text);
-  out.innerHTML += `<p>You: ${text}</p><p>AI: ${reply}</p>`;
-  speak(reply);
-}
-
-// ==== Savage AI Logic ====
-function savageReply(input){
-  input = input.toLowerCase();
-  if(input.includes('hello')) return {t:'Oh great... YOU again.',f:'🙄',h:'🖐'};
-  if(input.includes('how are you')) return {t:'Living in your phone... tragic.',f:'😑',h:'🤦'};
-  if(input.includes('help')) return {t:'Figure it out yourself genius.',f:'😏',h:'👉'};
-  return {t:'That made no sense.',f:'🤨',h:'🤷'};
-}
-
-function handleSavage(text){
-  const out = document.getElementById('output');
-  const face = document.getElementById('face');
-  const hands = document.getElementById('hands');
-  let r = savageReply(text);
-  face.innerText = r.f;
-  hands.innerText = r.h;
-  out.innerHTML += `<p>You: ${text}</p><p>Savage: ${r.t}</p>`;
-  speak(r.t);
-}
-
-// ==== Coding Helper ====
-function generateCode(){
-  const input = document.getElementById('codeInput').value;
-  const out = document.getElementById('output');
-  let code="console.log('hello world');";
-  if(input.includes('button')){
-    code=`<button onclick="alert('yo')">click</button>`;
-  }
-  out.innerText = code;
-}
-
-// ==== Game Maker ====
-function generateGame(){
-  const input = document.getElementById('gameInput').value;
-  const out = document.getElementById('output');
-  const frame = document.getElementById('frame');
-  let game = `<html><body style='background:black;color:white;text-align:center;'>
-  <h1>Game</h1><button onclick="alert('win')">Win</button></body></html>`;
-
-  if(input.includes('click')){
-    game=`<html><body style='background:black;color:white;text-align:center;'>
-    <h1>Clicker</h1>
-    <button onclick="score++">Tap</button>
-    <p id='s'>0</p>
-    <script>let score=0;setInterval(()=>{document.getElementById('s').innerText=score},100)</script>
-    </body></html>`;
-  }
-
-  out.innerText = game;
-  frame.srcdoc = game;
-}
-
-// ==== Mini Game ====
-let clickScore = 0;
-function setupMiniGame(){
-  const btn = document.getElementById('clickBtn');
-  const p = document.getElementById('s');
-  clickScore = 0;
-  btn.onclick = () => clickScore++;
-  setInterval(()=>{ p.innerText = clickScore; },100);
-}
-
-// ==== Section Renderer ====
-function renderSection(section){
-  const main = document.getElementById('main');
-  main.innerHTML = ''; // Clear previous section
-
-  if(section==='ai'){
-    const div = document.createElement('div');
-    div.innerHTML = `<h2>AI Assistant</h2><button id='aiMic'>🎤 Talk</button><div id='output'></div>`;
-    main.appendChild(div);
-    document.getElementById('aiMic').addEventListener('click',()=>startMic(handleAI));
-  }
-
-  else if(section==='savage'){
-    const div = document.createElement('div');
-    div.innerHTML = `<h2>Savage AI 😈</h2>
-    <div id='face' class='face'>😐</div>
-    <div id='hands' class='hands'>🤲</div>
-    <button id='savageMic'>🎤 Talk</button>
-    <div id='output'></div>`;
-    main.appendChild(div);
-    document.getElementById('savageMic').addEventListener('click',()=>startMic(handleSavage));
-  }
-
-  else if(section==='code'){
-    const div = document.createElement('div');
-    div.innerHTML = `<h2>Coding Assistant</h2>
-    <textarea id='codeInput' placeholder='Describe code...'></textarea>
-    <button id='genCode'>Generate</button>
-    <pre id='output'></pre>`;
-    main.appendChild(div);
-    document.getElementById('genCode').addEventListener('click',generateCode);
-  }
-
-  else if(section==='game'){
-    const div = document.createElement('div');
-    div.innerHTML = `<h2>Game Maker</h2>
-    <textarea id='gameInput' placeholder='Describe game...'></textarea>
-    <button id='genGame'>Create</button>
-    <pre id='output'></pre>
-    <iframe id='frame'></iframe>`;
-    main.appendChild(div);
-    document.getElementById('genGame').addEventListener('click',generateGame);
-  }
-
-  else if(section==='mini'){
-    const div = document.createElement('div');
-    div.innerHTML = `<h2>Click Game</h2><button id='clickBtn'>Tap</button><p id='s'>0</p>`;
-    main.appendChild(div);
-    setupMiniGame();
-  }
-
-  else if(section==='fun'){
-    const div = document.createElement('div');
-    div.innerHTML = `<h2>Fun Zone 🎉</h2>
-    <button id='surprise'>Surprise!</button>
-    <button id='colors'>Random Colors</button>
-    <button id='dice'>Roll Dice</button>
-    <div id='output'></div>`;
-    main.appendChild(div);
-    document.getElementById('surprise').addEventListener('click',()=>alert('Surprise! 🎁'));
-    document.getElementById('colors').addEventListener('click',()=>document.body.style.background='#'+Math.floor(Math.random()*16777215).toString(16));
-    document.getElementById('dice').addEventListener('click',()=>document.getElementById('output').innerHTML+=`<p>🎲 Dice Roll: ${Math.floor(Math.random()*6+1)}</p>`);
-  }
-
-  else if(section==='tricks'){
-    const div = document.createElement('div');
-    div.innerHTML = `<h2>Tricks & Jokes 🃏</h2>
-    <button id='knock'>Knock Knock</button>
-    <button id='fake'>Fake Trick</button>
-    <button id='mind'>Mind Trick</button>
-    <div id='output'></div>`;
-    main.appendChild(div);
-    document.getElementById('knock').addEventListener('click',()=>alert("Knock Knock! Who's there? AI 😎"));
-    document.getElementById('fake').addEventListener('click',()=>alert("Try closing the browser... just kidding 😏"));
-    document.getElementById('mind').addEventListener('click',()=>document.getElementById('output').innerHTML+=`<p>🤯 Mind Trick: Look behind you!</p>`);  
-  }
-}
-
-// ==== Menu Buttons ====
-document.querySelectorAll('.card').forEach(card=>{
-  card.addEventListener('click',()=>renderSection(card.dataset.section));
+// --- AI Microphone ---
+document.getElementById('aiMicBtn').addEventListener('click',async()=>{
+  try{
+    await navigator.mediaDevices.getUserMedia({audio:true});
+    alert('Microphone active!');
+    const r=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
+    r.lang='en-US'; r.interimResults=false;
+    r.onresult=e=>alert('You said: '+e.results[0][0].transcript);
+    r.start();
+  }catch{alert('Mic not available');}
 });
-</script>
 
+// --- Camera ---
+document.getElementById('cameraBtn').addEventListener('click',async()=>{
+  const v=document.getElementById('cameraStream');
+  try{
+    const s=await navigator.mediaDevices.getUserMedia({video:true});
+    v.srcObject=s; v.style.display='block';
+    const overlay=document.createElement('canvas'); overlay.width=400; overlay.height=300; overlay.style.position='absolute'; overlay.style.top=v.offsetTop+'px'; overlay.style.left=v.offsetLeft+'px'; document.body.appendChild(overlay);
+    v.addEventListener('click',()=>{const c=overlay.getContext('2d'); c.drawImage(v,0,0,overlay.width,overlay.height); alert('Photo captured!');});
+  }catch{alert('Camera not available');}
+});
+
+// --- Mini-Game ---
+document.getElementById('gameBtn').addEventListener('click',()=>{
+  const canvas=document.getElementById('gameCanvas'); canvas.style.display='block';
+  const ctx=canvas.getContext('2d'); let x=200,y=200,r=20,dx=2,dy=3;
+  const gameLoop=()=>{
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fillStyle='red'; ctx.fill(); ctx.closePath();
+    x+=dx; y+=dy;
+    if(x+r>canvas.width||x-r<0)dx*=-1;
+    if(y+r>canvas.height||y-r<0)dy*=-1;
+    requestAnimationFrame(gameLoop);
+  }; gameLoop();
+});
+
+// --- Notes ---
+document.getElementById('notesBtn').addEventListener('click',()=>{
+  const n=document.getElementById('notesContainer');
+  n.style.display=n.style.display==='none'?'block':'none';
+});
+
+// --- Savage AI ---
+document.getElementById('savageAiBtn').addEventListener('click',async()=>{
+  const chat=document.getElementById('chatBox'); chat.style.display='block'; chat.innerHTML='';
+  addMessage('Savage AI 😏: Ready to roast you!','ai');
+  try{
+    await navigator.mediaDevices.getUserMedia({audio:true});
+    const r=new(window.SpeechRecognition||window.webkitSpeechRecognition)();
+    r.lang='en-US'; r.interimResults=false;
+    const synth=window.speechSynthesis;
+    r.onresult=e=>{
+      const u=e.results[0][0].transcript; addMessage('You: '+u,'user');
+      const replies=['Savage AI 😎: Is that all? 🤨','Savage AI 😂: My grandma talks louder!','Savage AI 😏: Wow… impressive… not 🙄','Savage AI 🤖: Bored already 😴','Savage AI 😈: You call that talking? 😹'];
+      const rep=replies[Math.floor(Math.random()*replies.length)]; addMessage(rep,'ai');
+      const utter=new SpeechSynthesisUtterance(rep); synth.speak(utter);
+    };
+    r.onend=()=>r.start();
+    r.start();
+  }catch{alert('Mic not available');}
+});
+
+// --- Music Player ---
+document.getElementById('musicBtn').addEventListener('click',()=>{const m=document.getElementById('musicPlayer'); m.style.display=m.style.display==='none'?'block':'block'; m.play();});
+
+// --- Quick Tools ---
+document.getElementById('toolsBtn').addEventListener('click',()=>{const t=document.getElementById('quickTools'); t.style.display=t.style.display==='none'?'flex':'none';});
+document.getElementById('flashBtn').addEventListener('click',()=>alert('Flashlight toggled (requires device access)'));
+document.getElementById('timerBtn').addEventListener('click',()=>{const t=prompt('Set timer in seconds'); if(t){setTimeout(()=>alert('Timer done!'),t*1000);}});
+document.getElementById('calcBtn').addEventListener('click',()=>{const e=prompt('Enter expression'); if(e)alert('Result: '+eval(e));});
+
+// --- Themes ---
+document.getElementById('themesBtn').addEventListener('click',()=>{
+  if(document.body.style.background==='white'){document.body.style.background='#121212'; document.body.style.color='white';}else{document.body.style.background='white'; document.body.style.color='black';}
+});
+
+</script>
 </body>
 </html>
